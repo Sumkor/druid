@@ -102,7 +102,7 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     protected volatile Integer                         defaultTransactionIsolation;
     protected volatile String                          defaultCatalog                            = null;
 
-    protected String                                   name;
+    protected String                                   name; // 用于区分多数据源的命名
 
     protected volatile String                          username;
     protected volatile String                          password;
@@ -114,19 +114,19 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     protected volatile PasswordCallback                passwordCallback;
     protected volatile NameCallback                    userCallback;
 
-    protected volatile int                             initialSize                               = DEFAULT_INITIAL_SIZE;
-    protected volatile int                             maxActive                                 = DEFAULT_MAX_ACTIVE_SIZE;
-    protected volatile int                             minIdle                                   = DEFAULT_MIN_IDLE;
-    protected volatile int                             maxIdle                                   = DEFAULT_MAX_IDLE;
-    protected volatile long                            maxWait                                   = DEFAULT_MAX_WAIT;
+    protected volatile int                             initialSize                               = DEFAULT_INITIAL_SIZE;    // 初始化时建立物理连接的个数
+    protected volatile int                             maxActive                                 = DEFAULT_MAX_ACTIVE_SIZE; // 最大连接池数量
+    protected volatile int                             minIdle                                   = DEFAULT_MIN_IDLE;        // 最小连接池数量
+    protected volatile int                             maxIdle                                   = DEFAULT_MAX_IDLE;        // 废弃
+    protected volatile long                            maxWait                                   = DEFAULT_MAX_WAIT;        // 获取连接时最大等待时间，单位毫秒
     protected int                                      notFullTimeoutRetryCount                  = 0;
 
-    protected volatile String                          validationQuery                           = DEFAULT_VALIDATION_QUERY;
-    protected volatile int                             validationQueryTimeout                    = -1;
-    protected volatile boolean                         testOnBorrow                              = DEFAULT_TEST_ON_BORROW;
-    protected volatile boolean                         testOnReturn                              = DEFAULT_TEST_ON_RETURN;
-    protected volatile boolean                         testWhileIdle                             = DEFAULT_WHILE_IDLE;
-    protected volatile boolean                         poolPreparedStatements                    = false;
+    protected volatile String                          validationQuery                           = DEFAULT_VALIDATION_QUERY;// 用来检测连接是否有效的 sql 查询语句
+    protected volatile int                             validationQueryTimeout                    = -1;                      // 检测连接是否有效的超时时间，单位：秒
+    protected volatile boolean                         testOnBorrow                              = DEFAULT_TEST_ON_BORROW;  // 申请连接时执行 validationQuery 检测连接是否有效
+    protected volatile boolean                         testOnReturn                              = DEFAULT_TEST_ON_RETURN;  // 归还连接时执行 validationQuery 检测连接是否有效
+    protected volatile boolean                         testWhileIdle                             = DEFAULT_WHILE_IDLE;      // 申请连接的时候检测，如果空闲时间大于 timeBetweenEvictionRunsMillis，执行 validationQuery 检测连接是否有效。
+    protected volatile boolean                         poolPreparedStatements                    = false;                   // 是否缓存 preparedStatement，也就是 PSCache。在 MySQL 下建议关闭。
     protected volatile boolean                         sharePreparedStatements                   = false;
     protected volatile int                             maxPoolPreparedStatementPerConnectionSize = 10;
 
@@ -149,10 +149,10 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     protected volatile int                             maxWaitThreadCount                        = -1;
     protected volatile boolean                         accessToUnderlyingConnectionAllowed       = true;
 
-    protected volatile long                            timeBetweenEvictionRunsMillis             = DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS;
-    protected volatile int                             numTestsPerEvictionRun                    = DEFAULT_NUM_TESTS_PER_EVICTION_RUN;
-    protected volatile long                            minEvictableIdleTimeMillis                = DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS;
-    protected volatile long                            maxEvictableIdleTimeMillis                = DEFAULT_MAX_EVICTABLE_IDLE_TIME_MILLIS;
+    protected volatile long                            timeBetweenEvictionRunsMillis             = DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS;     // Destroy 线程会检测连接的间隔时间，默认 1 分钟。如果连接空闲时间大于等于 minEvictableIdleTimeMillis 则关闭物理连接
+    protected volatile int                             numTestsPerEvictionRun                    = DEFAULT_NUM_TESTS_PER_EVICTION_RUN;            // 废弃
+    protected volatile long                            minEvictableIdleTimeMillis                = DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS;        // 连接保持空闲而不被驱逐的最小时间，默认 30 分钟
+    protected volatile long                            maxEvictableIdleTimeMillis                = DEFAULT_MAX_EVICTABLE_IDLE_TIME_MILLIS;        // 连接保持空闲而不被驱逐的最大时间，默认 7 小时（小于 MySQL 的 wait_timeout 所设的 8 小时）
     protected volatile long                            keepAliveBetweenTimeMillis                = DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS * 2;
     protected volatile long                            phyTimeoutMillis                          = DEFAULT_PHY_TIMEOUT_MILLIS;
     protected volatile long                            phyMaxUseCount                            = -1;
@@ -287,7 +287,7 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     protected volatile Throwable                       lastFatalError                            = null;
 
     public DruidAbstractDataSource(boolean lockFair){
-        lock = new ReentrantLock(lockFair);
+        lock = new ReentrantLock(lockFair); // 如果配置了maxWait，在连接不够用争用时，unfair模式的ReentrantLock.tryLock方法存在严重不公的现象，个别线程会等到超时了还获取不到连接。但是并发性能较好。
 
         notEmpty = lock.newCondition();
         empty = lock.newCondition();
@@ -1040,7 +1040,7 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
             lock.lock();
             try {
                 if ((!this.inited) && (!lock.isFair())) {
-                    this.lock = new ReentrantLock(true);
+                    this.lock = new ReentrantLock(true); // 配置了maxWait之后，缺省启用公平锁
                     this.notEmpty = this.lock.newCondition();
                     this.empty = this.lock.newCondition();
                 }

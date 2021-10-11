@@ -803,7 +803,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
         }
 
         // bug fixed for dead lock, for issue #2980
-        DruidDriver.getInstance();
+        DruidDriver.getInstance(); // 向 JDBC 的 DriverManager 注册 DruidDriver 驱动
 
         final ReentrantLock lock = this.lock;
         try {

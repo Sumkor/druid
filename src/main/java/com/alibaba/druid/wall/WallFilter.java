@@ -65,7 +65,7 @@ import com.alibaba.druid.wall.WallConfig.TenantCallBack.StatementType;
 import com.alibaba.druid.wall.spi.*;
 import com.alibaba.druid.wall.violation.SyntaxErrorViolation;
 
-public class WallFilter extends FilterAdapter implements WallFilterMBean {
+public class WallFilter extends FilterAdapter implements WallFilterMBean { // 防 SQL 注入
 
     private final static Log   LOG            = LogFactory.getLog(WallFilter.class);
 
