@@ -1231,6 +1231,8 @@ public class MySqlExprParser extends SQLExprParser {
             if (lexer.identifierEquals(FnvHash.Constants.UNSIGNED)) {
                 lexer.nextToken();
                 ((SQLDataTypeImpl) dataType).setUnsigned(true);
+            } else if (lexer.identifierEquals(FnvHash.Constants.SIGNED)) {
+                lexer.nextToken(); // skip
             } else if (lexer.identifierEquals(FnvHash.Constants.ZEROFILL)) {
                 lexer.nextToken();
                 ((SQLDataTypeImpl) dataType).setZerofill(true);
@@ -1247,7 +1249,7 @@ public class MySqlExprParser extends SQLExprParser {
         return dataType;
     }
 
-    public SQLAssignItem parseAssignItem(boolean variant) {
+    public SQLAssignItem parseAssignItem(boolean variant, SQLObject parent) {
         SQLAssignItem item = new SQLAssignItem();
 
         SQLExpr var = primary();

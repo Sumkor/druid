@@ -626,12 +626,16 @@ public final class JdbcUtils implements JdbcConstants {
             return DbType.clickhouse;
         } else if (rawUrl.startsWith("jdbc:presto:")) {
             return DbType.presto;
+        } else if (rawUrl.startsWith("jdbc:trino:")) {
+            return DbType.trino;
         } else if (rawUrl.startsWith("jdbc:inspur:")) {
             return DbType.kdb;
         } else if (rawUrl.startsWith("jdbc:polardb")) {
             return DbType.polardb;
         } else if (rawUrl.startsWith("jdbc:highgo:")) {
             return DbType.highgo;
+        } else if (rawUrl.startsWith("jdbc:pivotal:greenplum:")||rawUrl.startsWith("jdbc:datadirect:greenplum:")) {
+            return DbType.greenplum;
         } else {
             return null;
         }
@@ -965,6 +969,8 @@ public final class JdbcUtils implements JdbcConstants {
             case postgresql:
             case edb:
             case polardb:
+            case greenplum:
+            case gaussdb:
                 return true;
             default:
                 return false;

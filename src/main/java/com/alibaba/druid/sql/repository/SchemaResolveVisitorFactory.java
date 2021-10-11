@@ -1889,6 +1889,14 @@ class SchemaResolveVisitorFactory {
                 checkParameter(visitor, identifierExpr);
 
                 SQLTableSource tableSource = unwrapAlias(visitor.getContext(), null, identifierExpr.nameHashCode64());
+                if (tableSource == null && x.getParent() instanceof HiveMultiInsertStatement) {
+                    SQLWithSubqueryClause with = ((HiveMultiInsertStatement) x.getParent()).getWith();
+                    if (with != null) {
+                        SQLWithSubqueryClause.Entry entry = with.findEntry(identifierExpr.nameHashCode64());
+                        tableSource = entry;
+                    }
+                }
+
                 if (tableSource != null) {
                     identifierExpr.setResolvedTableSource(tableSource);
                     return;
@@ -1910,12 +1918,24 @@ class SchemaResolveVisitorFactory {
                             }
                         }
                     }
+                    return;
+                }
+
+                SchemaObject view = repository.findView((SQLName) expr);
+                if (view != null) {
+                    x.setSchemaObject(view);
+                    return;
                 }
             }
+            return;
+        }
 
-        } else if (expr instanceof SQLMethodInvokeExpr) {
+        if (expr instanceof SQLMethodInvokeExpr) {
             visitor.visit((SQLMethodInvokeExpr) expr);
-        } else if (expr instanceof SQLQueryExpr) {
+            return;
+        }
+
+        if (expr instanceof SQLQueryExpr) {
             SQLSelect select =
             ((SQLQueryExpr) expr)
                     .getSubQuery();
@@ -1933,9 +1953,10 @@ class SchemaResolveVisitorFactory {
                 }
             }
             //if (queryBlock.findColumn())
-        } else {
-            expr.accept(visitor);
+            return;
         }
+
+        expr.accept(visitor);
     }
 
     static void resolve(SchemaResolveVisitor visitor, SQLAlterTableStatement x) {
@@ -2224,6 +2245,14 @@ class SchemaResolveVisitorFactory {
                         return true;
                     }
                 }
+
+                SchemaRepository repo = visitor.getRepository();
+                if (repo != null) {
+                    SchemaObject view = repo.findView(x);
+                    if (view != null && view.getStatement() instanceof SQLCreateViewStatement) {
+                        x.setResolvedOwnerObject(view.getStatement());
+                    }
+                }
             }
 
             SQLDeclareItem declareItem = parentCtx.findDeclare(hash);
@@ -2352,12 +2381,12 @@ class SchemaResolveVisitorFactory {
         SQLSelectQuery left = x.getLeft();
         SQLSelectQuery right = x.getRight();
 
-        boolean bracket = x.isBracket() && !(x.getParent() instanceof SQLUnionQueryTableSource);
+        boolean bracket = x.isParenthesized() && !(x.getParent() instanceof SQLUnionQueryTableSource);
 
         if ((!bracket)
                 && left instanceof SQLUnionQuery
                 && ((SQLUnionQuery) left).getOperator() == operator
-                && !right.isBracket()
+                && !right.isParenthesized()
                 && x.getOrderBy() == null) {
 
             SQLUnionQuery leftUnion = (SQLUnionQuery) left;
@@ -2365,24 +2394,28 @@ class SchemaResolveVisitorFactory {
             List<SQLSelectQuery> rights = new ArrayList<SQLSelectQuery>();
             rights.add(right);
 
-            for (; ; ) {
-                SQLSelectQuery leftLeft = leftUnion.getLeft();
-                SQLSelectQuery leftRight = leftUnion.getRight();
+            if (leftUnion.getRelations().size() > 2) {
+                rights.addAll(leftUnion.getRelations());
+            } else {
+                for (; ; ) {
+                    SQLSelectQuery leftLeft = leftUnion.getLeft();
+                    SQLSelectQuery leftRight = leftUnion.getRight();
 
-                if ((!leftUnion.isBracket())
-                        && leftUnion.getOrderBy() == null
-                        && (!leftLeft.isBracket())
-                        && (!leftRight.isBracket())
-                        && leftLeft instanceof SQLUnionQuery
-                        && ((SQLUnionQuery) leftLeft).getOperator() == operator) {
-                    rights.add(leftRight);
-                    leftUnion = (SQLUnionQuery) leftLeft;
-                    continue;
-                } else {
-                    rights.add(leftRight);
-                    rights.add(leftLeft);
+                    if ((!leftUnion.isParenthesized())
+                            && leftUnion.getOrderBy() == null
+                            && (!leftLeft.isParenthesized())
+                            && (!leftRight.isParenthesized())
+                            && leftLeft instanceof SQLUnionQuery
+                            && ((SQLUnionQuery) leftLeft).getOperator() == operator) {
+                        rights.add(leftRight);
+                        leftUnion = (SQLUnionQuery) leftLeft;
+                        continue;
+                    } else {
+                        rights.add(leftRight);
+                        rights.add(leftLeft);
+                    }
+                    break;
                 }
-                break;
             }
 
             for (int i = rights.size() - 1; i >= 0; i--) {
