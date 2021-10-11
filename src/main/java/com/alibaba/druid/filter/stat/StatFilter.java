@@ -59,7 +59,7 @@ import com.alibaba.druid.support.profile.Profiler;
 /**
  * @author wenshao [szujobs@hotmail.com]
  */
-public class StatFilter extends FilterEventAdapter implements StatFilterMBean {
+public class StatFilter extends FilterEventAdapter implements StatFilterMBean { // 采集监控信息，包括 SQL 执行、并发、慢查、执行时间区间分布等
 
     private final static Log          LOG                         = LogFactory.getLog(StatFilter.class);
 

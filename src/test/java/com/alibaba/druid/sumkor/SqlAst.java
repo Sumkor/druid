@@ -67,4 +67,33 @@ public class SqlAst {
         String sql = "";
         repository.console(sql);
     }
+
+    /**
+     * Druid SQL Parser提供了格式化代码的工具类。这个是基于语义分析做的SQL格式化功能，比其他的SQL格式化做的更智能，效果更好。
+     * https://github.com/alibaba/druid/wiki/SQL_Format
+     */
+    @Test
+    public void sqlFormat() {
+        String sql = "update t set name = 'x' where id < 100 limit 10";
+        String result = SQLUtils.format(sql, JdbcConstants.MYSQL);
+        System.out.println(result); // 缺省大写格式
+
+        String result_lcase = SQLUtils.format(sql
+                , JdbcConstants.MYSQL
+                , SQLUtils.DEFAULT_LCASE_FORMAT_OPTION);
+        System.out.println(result_lcase); // 小写格式
+        /**
+         * -- 这是缺省的大写格式
+         * UPDATE t
+         * SET name = 'x'
+         * WHERE id < 100
+         * LIMIT 10
+         *
+         * -- 这是小写格式
+         * update t
+         * set name = 'x'
+         * where id < 100
+         * limit 10
+         */
+    }
 }
