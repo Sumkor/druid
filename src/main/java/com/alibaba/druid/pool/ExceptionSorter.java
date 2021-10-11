@@ -21,7 +21,7 @@ import java.util.Properties;
 /**
  * An interface to allow for exception evaluation.
  */
-public interface ExceptionSorter {
+public interface ExceptionSorter { // 作用：在数据库服务器重启、网络抖动、连接被服务器关闭等异常情况下，连接发生了不可恢复异常，将连接从连接池中移除，保证连接池在异常发生时情况下正常工作。
 
     /**
      * Returns true or false whether or not the exception is fatal.

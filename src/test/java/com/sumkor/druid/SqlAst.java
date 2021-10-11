@@ -1,4 +1,4 @@
-package com.alibaba.druid.sumkor;
+package com.sumkor.druid;
 
 import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.SQLUtils;

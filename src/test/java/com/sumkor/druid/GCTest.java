@@ -1,4 +1,4 @@
-package com.alibaba.druid.sumkor;
+package com.sumkor.druid;
 
 import com.alibaba.druid.sql.test.TestUtils;
 import org.junit.Test;
@@ -71,7 +71,7 @@ public class GCTest {
          * Process finished with exit code 0
          *
          * 分析：
-         * GC 表明进行了一次垃圾回收，前面没有 Full 修饰，表明这是一次 Minor GC ,注意它不表示只 GC 新生代，并且现有的不管是新生代还是老年代都会 STW。
+         * GC 表明进行了一次垃圾回收，前面没有 Full 修饰，表明这是一次 Minor GC，注意它不表示只 GC 新生代，并且现有的不管是新生代还是老年代都会 STW。
          * Allocation Failure 表明本次引起 GC 的原因是因为在年轻代中没有足够的空间能够存储新的数据了。
          *
          * 流程：
